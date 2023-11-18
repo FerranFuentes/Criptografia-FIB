@@ -1,6 +1,8 @@
 import hashlib
 import copy
 import sympy
+import random
+import math
 
 d = 16
 
@@ -8,7 +10,7 @@ class block:
     def __init__(self):
         self.block_hash
         self.previous_block_hash
-        self.transaction = transaction(150, rsa_key())
+        self.transaction = transaction(150, RSAkey())
         self.seed
 
     def genesis(self, transaction):
@@ -119,9 +121,8 @@ class RSAkey:
     def __init__(self, bits_modulo=2048, e = 2**16+1):
         self.publicExponent = e
         self.privateExponent = int(sympy.gcdex(e, self.phi)[0])
+        self.primeP, self.primeQ =  self.getPrimes(e, bits_modulo)
         self.modulus = self.primeP*self.primeQ
-        self.primeP = self.getPrime(e, bits_modulo)
-        self.primeQ = self.getPrime(e, bits_modulo)
         self.phi = (self.primeP-1)*(self.primeQ-1)
         self.privateExponentModulusPhiP = int(self.privateExponent % (self.primeP-1))
         self.privateExponentModulusPhiQ = int(self.privateExponent % (self.primeQ-1))
@@ -148,11 +149,28 @@ class RSAkey:
         pp = 1 - qq
         return qq*a + pp*b
 
-    def sign_slow(self, messafe):
+    def sign_slow(self, message):
         """
         Salida: un entero que es la firma de "message" hecha con la clave RSA sin usar el TCR
         """
-        pass
+        return pow(message, self.privateExponent, self.modulus)
+    
+    def verify(self, message, signature):
+        return pow(signature, self.publicExponent, self.modulus) == message
+    
+    def getPrimes(self, e, bits_modulo):
+        while True:
+            p = random.getrandbits(bits_modulo)
+            retry = 1
+            while not sympy.isprime(p):
+                retry += 1
+                p = random.getrandbits(bits_modulo)
+            q = random.getrandbits(bits_modulo)
+            while not sympy.isprime(q) or p == q:
+                retry += 1
+                q = random.getrandbits(bits_modulo)
+            if math.gcd(e,p*q) == 1 and e < (p-1)*(q-1):
+                return int(p), int (q)
 
 class rsa_public_key:
     def __init__(self, rsa_key):
@@ -166,6 +184,6 @@ class rsa_public_key:
         p´ublica RSA;
         el booleano False en cualquier otro caso.
         """
-        pass
+        return pow(signature, self.publicExponent, self.modulus) == message
     
 
