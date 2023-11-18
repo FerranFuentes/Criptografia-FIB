@@ -1,0 +1,62 @@
+Galors Fields (GF)
+
+Vamos a interpretar cada cadena de bytes como un polinomio binario
+
+b7,b6,b5....,b1,b0 = b7*x⁷+b6*x⁶.....
+
++ -> XOR
+x -> AND
+
+Operaciones bit a bit!!
+
+
+
+En los productos obtendremos polinomios de hasta grado 14. Tendremos que aplicarle el módulo m. mod m(x).
+
+
+B*B' = p(x) mod m(x) = r(x)
+
+Ejemlo:
+    123*240
+        123 -> 01111101 -> x⁶+x⁵+x⁴+x³+x+1 = a(x)
+        240 -> 11110000 -> x⁷+x⁶+x⁵+x⁴ = b(x)
+    Multiplicamos los polinomios, en vez de sumar se aplica XOR fila a fila.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+m(x) -> polinomio irreducible de grado 8. No se puede escribir como producto de otro polinomio.
+    En AES se utiliza (en HEX) -> ox11B = 100010111
+    Que en polinomio sería -> x⁸+x⁴+x²+x+1
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Implementar:
+    xTime(a) 
+        a(x) * x
+        Al fin i al cabo, es desplazar los bits 1 posicion a la izquierda. Si el bit más significativo es 1, a <= 127 solo desplazamos
+        si a >= 128. Nos queda un polinomio de grado 8, por lo que tenemos que dividirlo por m(x) y quedarnos con el resto.
+
+    Tablas
+        Los cuerpos finitos tienen elementos que se denominan generadores. Si obtenemos un elemento G != 0,1 y calculamos sus potencias, G es generador
+        si g⁰ = 1, g¹ = g, g², ...., g²⁵⁴ son diferentes (g²⁵⁵ = 1). Si tenemos un generador, podemos generar todos los elementos del cuerpo finito.
+        Para obtenerlo se empieza por el 0x02 y vamos probando hasta que se cumpla la condición de generador. En AES el generador es 0x03.
+
+        Ahora con el cuerpo finito y el generador, construimos las tablas. Una tabla contiene 255 posiciones que contienen el resultado de aplicar
+        gⁱ. La otra tabla contiene el resultado de aplicar log(gⁱ). "La tabla de logaritmos se utiliza para calcular la inversa de un elemento."
+        
+        Producto rápido
+
+        AxB  
+        A = g^i -> log(A) = i
+        B = g^j -> log(B) = j
+        gⁱ * gⁱ = g ^ (i+j) % 255
+        exp ((log(A) + log(B)) % 255)
+
+        Inverso
+
+        A⁻¹
+        A = gⁱ
+        (gⁱ)⁻¹ = g ^(-i) % 255
+        exp(-log(-A) + 255) = A⁻¹
+
+
